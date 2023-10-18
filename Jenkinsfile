@@ -1,31 +1,33 @@
 pipeline {
-  agent any
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
-  }
   environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+    imagename = "malekghorbel/test"
+    registryCredential = 'dockerhub'
+    dockerImage = ''
   }
+  agent any
   stages {
-    stage('Build') {
+    stage('Cloning Git') {
       steps {
-        sh 'docker build -t malekghorbel/haki .'
+        git([url: 'https://github.com/Malek-Ghorbel/test', branch: 'main', credentialsId: 'githubcred'])
+ 
       }
     }
-    stage('Login') {
-      steps {
-        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build imagename
+        }
       }
     }
-    stage('Push') {
-      steps {
-        sh 'docker push malekghorbel/haki'
+    stage('Deploy Image') {
+      steps{
+        script {
+          docker.withRegistry( '', registryCredential ) {
+            dockerImage.push("$BUILD_NUMBER")
+             dockerImage.push('latest')
+          }
+        }
       }
-    }
-  }
-  post {
-    always {
-      sh 'docker logout'
     }
   }
 }
