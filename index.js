@@ -49,5 +49,5 @@ axios.get(url, {
     console.log("-Average tempareture : "+getAverage(temperatureValues));
   })
   .catch((error) => {
-    console.error(error.message);
+    console.error("hello from server");
   });
